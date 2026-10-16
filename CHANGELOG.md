@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.0.0 - 2026-10-16
 
 - First version, extracted from the docs page of a Filament app: the plugin, the page, the screenshot route and the
   `docs:screenshot` command.
