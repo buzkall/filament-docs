@@ -1,0 +1,37 @@
+{
+  "preset": "laravel",
+  "rules": {
+    "blank_line_before_statement": true,
+    "trailing_comma_in_multiline": false,
+    "concat_space": {
+      "spacing": "one"
+    },
+    "method_argument_space": true,
+    "function_declaration": {
+      "closure_function_spacing": "none",
+      "closure_fn_spacing": "none"
+    },
+    "array_indentation": false,
+    "cast_spaces": {
+      "space": "none"
+    },
+    "class_attributes_separation": {
+      "elements": {
+        "const": "none",
+        "method": "one",
+        "property": "none",
+        "trait_import": "none"
+      }
+    },
+    "binary_operator_spaces": {
+      "default": "single_space",
+      "operators": {
+        "=>": "align_single_space_minimal"
+      }
+    },
+    "no_useless_else": true,
+    "no_unused_imports": true,
+    "combine_consecutive_issets": true,
+    "single_quote": true
+  }
+}

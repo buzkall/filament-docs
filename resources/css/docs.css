@@ -1,0 +1,85 @@
+/* The documentation's markdown: heading anchors, `> [!NOTE]` callouts and the
+   embedded screenshots. Import it into the panel's custom theme, which also
+   needs `@plugin '@tailwindcss/typography'` and an `@source` for this
+   package's views.
+
+   Anchors and callouts are added by DocRenderer after the HTML is sanitized.
+   A heading leaves room for the sticky topbar when an anchor or the contents
+   list jumps to it. The "#" only shows while the heading is hovered, so it
+   does not clutter the text. */
+.fi-docs-content {
+    & :is(h2, h3) {
+        @apply scroll-mt-20;
+    }
+
+    & .fi-docs-anchor {
+        @apply ms-2 font-normal text-gray-400 no-underline opacity-0 transition-opacity dark:text-gray-500;
+    }
+
+    & :is(h2, h3):hover .fi-docs-anchor,
+    & .fi-docs-anchor:focus {
+        @apply opacity-100;
+    }
+
+    & .fi-docs-callout {
+        @apply my-6 rounded-e-lg border-s-4 px-4 py-3;
+
+        & > :first-child {
+            @apply mt-0;
+        }
+
+        & > :last-child {
+            @apply mb-0;
+        }
+    }
+
+    & .fi-docs-callout-title {
+        @apply mb-1 font-semibold;
+    }
+
+    & .fi-docs-callout-note {
+        @apply border-info-500 bg-info-50 dark:bg-info-500/10;
+
+        & .fi-docs-callout-title {
+            @apply text-info-700 dark:text-info-400;
+        }
+    }
+
+    & .fi-docs-callout-tip {
+        @apply border-success-500 bg-success-50 dark:bg-success-500/10;
+
+        & .fi-docs-callout-title {
+            @apply text-success-700 dark:text-success-400;
+        }
+    }
+
+    & .fi-docs-callout-important {
+        @apply border-primary-500 bg-primary-50 dark:bg-primary-500/10;
+
+        & .fi-docs-callout-title {
+            @apply text-primary-700 dark:text-primary-400;
+        }
+    }
+
+    & .fi-docs-callout-warning {
+        @apply border-warning-500 bg-warning-50 dark:bg-warning-500/10;
+
+        & .fi-docs-callout-title {
+            @apply text-warning-700 dark:text-warning-400;
+        }
+    }
+
+    & .fi-docs-callout-caution {
+        @apply border-danger-500 bg-danger-50 dark:bg-danger-500/10;
+
+        & .fi-docs-callout-title {
+            @apply text-danger-700 dark:text-danger-400;
+        }
+    }
+
+    /* The screenshots `docs:screenshot` embeds: a frame so they read as a
+       picture of the panel rather than part of the page. */
+    & img {
+        @apply rounded-lg border border-gray-200 shadow-sm dark:border-gray-700;
+    }
+}

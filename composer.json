@@ -1,0 +1,69 @@
+{
+    "name": "arzcode/filament-docs",
+    "description": "An in-panel user manual for Filament: one markdown file per screen, laid out like the panel's own navigation, with screenshots taken by Playwright.",
+    "keywords": [
+        "filament",
+        "filamentphp",
+        "laravel",
+        "documentation",
+        "markdown",
+        "screenshots"
+    ],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "arzcode",
+            "email": "git@arzcode.com",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "php": "^8.4",
+        "barryvdh/laravel-dompdf": "^3.1",
+        "filament/filament": "^5.8",
+        "illuminate/contracts": "^12.0|^13.0",
+        "spatie/laravel-package-tools": "^1.16"
+    },
+    "require-dev": {
+        "driftingly/rector-laravel": "^2.6",
+        "larastan/larastan": "^3.0",
+        "laravel/pint": "^1.18",
+        "orchestra/testbench": "^10.0|^11.0",
+        "pestphp/pest": "^4.0|^5.0",
+        "pestphp/pest-plugin-laravel": "^4.0|^5.0",
+        "pestphp/pest-plugin-livewire": "^4.0|^5.0",
+        "rector/rector": "^2.6"
+    },
+    "autoload": {
+        "psr-4": {
+            "Arzcode\\FilamentDocs\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Arzcode\\FilamentDocs\\Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "analyse": "vendor/bin/phpstan analyse",
+        "test": "vendor/bin/pest",
+        "format": "vendor/bin/pint",
+        "refactor": "vendor/bin/rector process",
+        "refactor:check": "vendor/bin/rector process --dry-run"
+    },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Arzcode\\FilamentDocs\\FilamentDocsServiceProvider"
+            ]
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}
