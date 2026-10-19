@@ -262,7 +262,7 @@ class DocPdf
         return $this->transform($html, function(HTMLDocument $document, Element $body): void {
             $this->groupFigures($document, $body);
 
-            $blocks = iterator_to_array($body->children, false);
+            $blocks = $this->childElements($body);
             $count = count($blocks);
             $index = 0;
 
@@ -433,7 +433,7 @@ class DocPdf
      */
     private function groupFigures(HTMLDocument $document, Element $body): void
     {
-        $blocks = iterator_to_array($body->children, false);
+        $blocks = $this->childElements($body);
 
         foreach ($blocks as $index => $block) {
             if (! $this->isImageParagraph($block)) {
@@ -463,7 +463,7 @@ class DocPdf
 
     private function liftInlineCaption(HTMLDocument $document, Element $paragraph): ?Element
     {
-        foreach ($paragraph->children as $child) {
+        foreach ($this->childElements($paragraph) as $child) {
             if ($child->localName === 'strong') {
                 $caption = $document->createElement('p');
                 $caption->append($child);
@@ -473,6 +473,22 @@ class DocPdf
         }
 
         return null;
+    }
+
+    /**
+     * The element children of a node. `Element::$children` is PHP 8.5 only.
+     *
+     * @return list<Element>
+     */
+    private function childElements(Element $parent): array
+    {
+        $children = [];
+
+        for ($child = $parent->firstElementChild; $child instanceof Element; $child = $child->nextElementSibling) {
+            $children[] = $child;
+        }
+
+        return $children;
     }
 
     /**
