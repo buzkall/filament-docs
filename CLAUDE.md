@@ -36,7 +36,7 @@ Targets: **PHP 8.4+, Laravel 12 or 13, Filament 5.8+, Livewire 4**.
 
 1. **The navigation is the access check.** Never keep a separate list of who may read what: a doc is listed, searched, paged to and served (images included) only while its screen is in the reader's navigation. A hidden or unknown doc answers 404, never 403.
 2. **Sanitize first, then add.** `DocRenderer` runs `Str::markdown()->sanitizeHtml()` before any DOM pass, so the ids, classes and roles it adds survive the allowlist. Keep new passes after it.
-3. **Nothing per reader is cached.** A rendered doc is cached by renderer version, locale, slug and file mtime; the highlight is applied after. Bump `DocRenderer::VERSION` whenever a render changes.
+3. **Nothing per reader is cached.** A rendered doc is cached by renderer version, locale, panel, file and mtime; the highlight is applied after. Bump `DocRenderer::VERSION` whenever a render changes.
 4. **The screenshot command never wipes a doc.** A run that captured nothing changes nothing; a narrowed or partly failed run replaces only the screens it shot.
 5. **Nothing about the host is assumed.** No `App\` class, no role, no panel id: the arch test fails on an `App` import.
 6. **The PDF is built from the sidebar.** `DocPdf` reads only the docs `Documentation::getSidebarGroups()` returns, never the docs folder, and dompdf may read files only from its chroot (the app, the screenshots disk and the logo's folder). dompdf has no CSS variables or oklch(), so colors in `resources/views/pdf.blade.php` are concrete values from `FilamentColor`.
@@ -66,6 +66,8 @@ A render is cached for a day under `filament-docs:v{VERSION}:{locale}:{panel}:{m
 ### Search
 
 Every word must appear somewhere in the doc. Per word, a match in the title scores 3, in a heading 2, in the body 1; ties keep the sidebar's order. `SearchText` folds case and accents.
+
+The open doc marks the search with `?highlight=`: the whole phrase first, as one mark, then each word only where a word starts, so no word is marked inside another. Words shorter than three letters (`de`, `a`) are marked only within the phrase, unless the query has nothing longer, or they would light up every sentence.
 
 ### Screenshots
 

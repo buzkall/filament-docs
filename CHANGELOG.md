@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.1.1 - Unreleased
+
+- The search highlight no longer marks a word inside another, nor short words such as "de" or "a" on their own: it
+  marks the whole phrase as one, then each word where a word starts. Searching "copia de seguridad" used to mark every
+  "de" in the doc, "descargarlos" included.
+
 ## 1.1.0 - 2026-10-26
 
 - Docs in several panels: `->path()` and `->concepts()` on the plugin give a panel its own markdown folder and concept

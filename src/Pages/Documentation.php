@@ -72,6 +72,12 @@ class Documentation extends Page
      */
     private const int MIN_TOC_HEADINGS = 2;
 
+    /**
+     * Shorter words ("de", "a") are in most sentences: marked on their own
+     * they light up the whole doc, so they are only marked within the phrase.
+     */
+    private const int MIN_HIGHLIGHT_LENGTH = 3;
+
     private const array ACCENT_CLASSES = [
         'a' => '[aáàâä]', 'e' => '[eéèêë]', 'i' => '[iíìîï]',
         'o' => '[oóòôö]', 'u' => '[uúùûü]', 'n' => '[nñ]', 'c' => '[cç]',
@@ -269,13 +275,34 @@ class Documentation extends Page
             return $html;
         }
 
-        $pattern = implode('|', array_map(
-            fn(string $term): string => strtr(preg_quote($term, '/'), self::ACCENT_CLASSES),
-            $terms,
-        ));
+        $pattern = implode('|', $this->highlightPatterns($terms));
 
         // Only outside tags, so an attribute that contains the term is left alone.
         return (string)preg_replace("/({$pattern})(?![^<]*>)/iu", '<mark>$1</mark>', $html);
+    }
+
+    /**
+     * The whole phrase first, so it is marked as one, then each word where a
+     * word starts: "copia" marks "Copias", but no word is marked inside
+     * another. A word shorter than MIN_HIGHLIGHT_LENGTH ("de", "a") is only
+     * marked within the phrase, unless the query has nothing longer.
+     *
+     * @param  list<string>  $terms
+     * @return list<string>
+     */
+    private function highlightPatterns(array $terms): array
+    {
+        $accentInsensitive = fn(string $term): string => strtr(preg_quote($term, '/'), self::ACCENT_CLASSES);
+        $wordStart = '(?<![\p{L}\p{N}])';
+
+        $words = array_filter($terms, fn(string $term): bool => mb_strlen($term) >= self::MIN_HIGHLIGHT_LENGTH) ?: $terms;
+        $patterns = array_map(fn(string $term): string => $wordStart . $accentInsensitive($term), array_values($words));
+
+        if (count($terms) > 1) {
+            array_unshift($patterns, $wordStart . implode('[^\p{L}\p{N}<>]+', array_map($accentInsensitive, $terms)));
+        }
+
+        return $patterns;
     }
 
     /**

@@ -8,7 +8,8 @@ with search, a contents list, callouts, a pager and optional screenshots taken b
 - A reader only sees, searches and opens the docs of the screens they can open. Any other doc answers 404, and so do
   its screenshots.
 - Search needs every word to match, ignores accents and ranks a match in the title above one in a heading, above one in
-  the body. A result opens at the section that holds the match, with the words highlighted.
+  the body. A result opens at the section that holds the match, with the phrase and the words highlighted where a
+  word starts, short words such as "de" only within the phrase.
 - `> [!NOTE]`, `[!TIP]`, `[!IMPORTANT]`, `[!WARNING]` and `[!CAUTION]` become callouts, `[Users](users.md)` links to
   that doc, and every `##`/`###` gets an anchor and a place in the "On this page" list.
 - **Export PDF** in the page header downloads the open doc, or the whole manual with a cover and a contents list, as a

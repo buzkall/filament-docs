@@ -9,6 +9,7 @@ use Arzcode\FilamentDocs\Tests\Fixtures\User;
 use Filament\Facades\Filament;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\File;
+use Livewire\Livewire;
 
 use function Pest\Livewire\livewire;
 
@@ -155,6 +156,35 @@ it('marks the words searched for in the doc it opens', function(): void {
     $this->actingAs(User::factory()->create())
         ->get('/admin/manual/reports?highlight=chart')
         ->assertSee('<mark>chart</mark>', false);
+});
+
+/**
+ * The open doc's HTML as a reader who searched for the query sees it.
+ */
+function highlighted(string $query): string
+{
+    test()->actingAs(User::factory()->create());
+
+    return Livewire::withQueryParams(['highlight' => $query])->test(Documentation::class, ['doc' => 'reports'])->instance()->getRenderedContent();
+}
+
+it('marks the whole phrase searched for as one, but not its short words elsewhere', function(): void {
+    $html = highlighted('a spreadsheet');
+
+    expect($html)->toContain('<mark>a spreadsheet</mark>')
+        ->and(substr_count($html, '<mark>'))->toBe(1);
+});
+
+it('marks a word only where a word starts, never inside another', function(): void {
+    expect(highlighted('month'))->toContain('<mark>Month</mark>ly')->toContain('<mark>month</mark>.')
+        ->and(highlighted('port'))->not->toContain('<mark>');
+});
+
+it('still marks a short word when it is all that was searched for', function(): void {
+    $html = highlighted('as');
+
+    expect($html)->toContain('<mark>as</mark> a spreadsheet')
+        ->and(substr_count($html, '<mark>'))->toBe(1);
 });
 
 it('serves a doc from the cache until its file changes', function(): void {
