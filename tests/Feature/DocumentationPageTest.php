@@ -160,7 +160,7 @@ it('marks the words searched for in the doc it opens', function(): void {
 it('serves a doc from the cache until its file changes', function(): void {
     $this->actingAs(User::factory()->create());
     $path = config('filament-docs.path') . '/reports.md';
-    $key = 'filament-docs:v' . DocRenderer::VERSION . ':en:reports:' . File::lastModified($path);
+    $key = 'filament-docs:v' . DocRenderer::VERSION . ':en:admin:' . md5($path) . ':' . File::lastModified($path);
 
     Cache::put($key, ['html' => '<p>From the cache</p>', 'headings' => [], 'text' => 'From the cache']);
 

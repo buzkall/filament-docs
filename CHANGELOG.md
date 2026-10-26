@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.1.0 - 2026-10-26
+
+- Docs in several panels: `->path()` and `->concepts()` on the plugin give a panel its own markdown folder and concept
+  docs, and each panel keeps only the `screens` it registers, so a screen of another panel no longer breaks the sidebar.
+  `docs:screenshot --panel` reads and writes that panel's folder and image URL.
+- A panel without an `index` doc opens on the first doc of its sidebar.
+- `->preprocessMarkdown()` rewrites a doc's markdown before it is rendered, searched or exported.
+- A concept may have its own sidebar icon: `['label' => …, 'icon' => …]`.
+- Catalan translations.
+- The render cache is keyed by panel and file instead of slug.
+- Fix: a screen whose navigation item links elsewhere than its index (`getNavigationUrl()`, e.g. a single-record
+  resource opening its edit page) lost its doc. The sidebar and the "open in the panel" link now use that URL.
+
 ## 1.0.1 - 2026-10-19
 
 - Fix the PDF export on PHP 8.4: it read `Dom\Element::$children`, which only exists in PHP 8.5.

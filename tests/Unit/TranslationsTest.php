@@ -8,4 +8,4 @@ it('translates every key in every locale', function(string $locale): void {
     ));
 
     expect($keys($locale))->toBe($keys('en'));
-})->with(['es']);
+})->with(['es', 'ca']);

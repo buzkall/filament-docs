@@ -4,6 +4,7 @@ namespace Arzcode\FilamentDocs;
 
 use Arzcode\FilamentDocs\Http\Controllers\DocumentationImageController;
 use Arzcode\FilamentDocs\Pages\Documentation;
+use Arzcode\FilamentDocs\Support\DocsConfig;
 use BackedEnum;
 use Closure;
 use Filament\Contracts\Plugin;
@@ -17,6 +18,9 @@ use Illuminate\Support\Facades\Route;
 use LogicException;
 use UnitEnum;
 
+/**
+ * @phpstan-import-type Concept from DocsConfig
+ */
 class FilamentDocsPlugin implements Plugin
 {
     use EvaluatesClosures;
@@ -27,7 +31,13 @@ class FilamentDocsPlugin implements Plugin
     public const string IMAGE_ROUTE = 'docs.image';
 
     protected ?Closure $authorizeUsing = null;
+    protected ?Closure $preprocessMarkdownUsing = null;
     protected string $slug = 'docs';
+    protected string|Closure|null $path = null;
+
+    /** @var array<mixed>|Closure|null */
+    protected array|Closure|null $concepts = null;
+
     protected bool|Closure $pdfExport = true;
     protected string|Closure|null $pdfLogo = null;
     protected string|UnitEnum|Closure|null $navigationGroup = null;
@@ -125,6 +135,83 @@ class FilamentDocsPlugin implements Plugin
     public function getSlug(): string
     {
         return $this->slug;
+    }
+
+    /**
+     * The folder this panel's markdown lives in, when it is not the one in
+     * `filament-docs.path`. The screenshots stay on the `filament-docs` disk
+     * either way, so a slug has to be unique across panels.
+     */
+    public function path(string|Closure|null $path): static
+    {
+        $this->path = $path;
+
+        return $this;
+    }
+
+    /** The folder of this panel's markdown, without a trailing slash. */
+    public function getPath(): string
+    {
+        $path = $this->evaluate($this->path);
+
+        return is_string($path) && $path !== '' ? rtrim($path, '/') : DocsConfig::path();
+    }
+
+    /** The markdown file of a doc in this panel's folder. */
+    public function getDocPath(string $slug): string
+    {
+        return DocsConfig::docPath($slug, $this->getPath());
+    }
+
+    /**
+     * This panel's concept docs, in place of `filament-docs.concepts`: slug =>
+     * label, or slug => `['label' => …, 'icon' => …]`.
+     *
+     * @param  array<mixed>|Closure|null  $concepts
+     */
+    public function concepts(array|Closure|null $concepts): static
+    {
+        $this->concepts = $concepts;
+
+        return $this;
+    }
+
+    /**
+     * @return array<string, Concept>
+     */
+    public function getConcepts(): array
+    {
+        $concepts = $this->evaluate($this->concepts);
+
+        return is_array($concepts) ? DocsConfig::normalizeConcepts($concepts) : DocsConfig::concepts();
+    }
+
+    /**
+     * Rewrites a doc's markdown before it is rendered, searched or exported,
+     * e.g. to expand the app's own tokens into HTML. Receives the markdown and
+     * the doc's slug and returns the new markdown. Its output still goes
+     * through the sanitizer.
+     */
+    public function preprocessMarkdown(?Closure $callback): static
+    {
+        $this->preprocessMarkdownUsing = $callback;
+
+        return $this;
+    }
+
+    public function prepareMarkdown(string $markdown, string $slug): string
+    {
+        if (! $this->preprocessMarkdownUsing instanceof Closure) {
+            return $markdown;
+        }
+
+        $prepared = $this->evaluate($this->preprocessMarkdownUsing, ['markdown' => $markdown, 'slug' => $slug]);
+
+        if (! is_string($prepared)) {
+            throw new LogicException('The preprocessMarkdown() callback must return the markdown as a string.');
+        }
+
+        return $prepared;
     }
 
     /** Root-relative URL prefix of the screenshots in the given panel. */

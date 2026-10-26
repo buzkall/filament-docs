@@ -29,7 +29,7 @@ class DocRenderer
      * Bump it whenever what a render returns changes shape or content, so a doc
      * cached by an older version is rendered again instead of read.
      */
-    public const int VERSION = 2;
+    public const int VERSION = 3;
 
     /**
      * A private-use character dropped in front of each heading while the text

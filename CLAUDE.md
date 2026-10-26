@@ -48,6 +48,8 @@ Targets: **PHP 8.4+, Laravel 12 or 13, Filament 5.8+, Livewire 4**.
 
 `Documentation::getSidebarGroups()` walks `Filament::getNavigation()` group by group and keeps every item whose URL belongs to a screen in `filament-docs.screens`, with that item's label and icon. The `concepts` docs go at the top, followed by the panel's ungrouped screens with no heading, as the panel shows them. Moving, renaming or re-sorting a screen therefore moves its doc, with nothing to change in the docs.
 
+Several panels can show docs. `DocsConfig::screensIn()` keeps the screens the current panel registers, because the URL of another panel's screen cannot be built. The plugin's `->path()` and `->concepts()` override the config for that panel. Everything that reads a doc goes through the plugin of the current panel: `Documentation::docPath()`, `getMarkdown()` (which applies `->preprocessMarkdown()`), `DocPdf` and `DocScreenshots`. The screenshot command sets the panel it shoots as the current one. Images stay on the single `filament-docs` disk, so slugs are unique across panels.
+
 Filament only puts in the navigation what the reader may open, so a screen that hides itself (`canAccess()`, `shouldRegisterNavigation()`) hides its doc too. The search scope, the pager and the slugs the page and the image route serve are all built from this one sidebar, so they cannot disagree with the panel. The slug is checked against the sidebar before the filesystem is touched, so a markdown file that is not configured is never served.
 
 ### Rendering
@@ -59,7 +61,7 @@ Filament only puts in the navigation what the reader may open, so a screen that 
 - a relative `something.md#frag` link becomes that doc's panel URL, so the same link works when the file is read on GitHub;
 - the plain text is read for search, and each heading records its `offset` in it. A search result opens at the last heading before the match by that offset, never by looking the heading's words up, which would match wherever the prose used them first.
 
-A render is cached for a day under `filament-docs:v{VERSION}:{locale}:{slug}:{mtime}`. The `?highlight=` marks are added after it is read.
+A render is cached for a day under `filament-docs:v{VERSION}:{locale}:{panel}:{md5(path)}:{mtime}`. The `?highlight=` marks are added after it is read.
 
 ### Search
 

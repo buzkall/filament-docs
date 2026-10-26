@@ -347,7 +347,7 @@ class DocPdf
     private function item(string $slug, string $label, bool $showLabel, ?array $manualSlugs): array
     {
         $rendered = app(DocRenderer::class)->render(
-            File::get(DocsConfig::docPath($slug)),
+            app(Documentation::class)->getMarkdown($slug),
             fn(string $target): string => $manualSlugs !== null && in_array($target, $manualSlugs, true)
                 ? "#doc-{$target}"
                 : Documentation::getUrl(['doc' => $target]),

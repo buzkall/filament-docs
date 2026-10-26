@@ -56,6 +56,10 @@ class ScreenshotDocsCommand extends Command
         $panel = filled($this->stringOption('panel')) ? Filament::getPanel($this->stringOption('panel')) : Filament::getDefaultPanel();
         $only = array_values(array_filter((array)$this->option('only'), is_string(...)));
 
+        // The docs read and written are the ones in this panel's folder, with
+        // its image URL.
+        Filament::setCurrentPanel($panel);
+
         $targets = array_values(array_filter(
             $documentation->screenshotTargets($panel->getId()),
             fn(array $target): bool => ($only === [] || in_array($target['slug'], $only, true)) && in_array($target['screen'], $screens, true),

@@ -10,8 +10,9 @@ return [
 
     /*
      | Docs about a concept rather than a screen, at the top of the sidebar and
-     | readable by anyone who may open the documentation, by slug => label. The
-     | label goes through `__()`, so it may be a translation key.
+     | readable by anyone who may open the documentation, by slug => label, or
+     | slug => ['label' => …, 'icon' => …]. The label goes through `__()`, so
+     | it may be a translation key. A panel may set its own with ->concepts().
      */
     'concepts' => [
         'index' => 'filament-docs::docs.pages.index',
@@ -22,7 +23,8 @@ return [
      | slug => Resource or Page class. The docs sidebar is the panel's own
      | navigation with these docs in place of the screens: same groups, same
      | order, same label and icon. A doc is listed, searched and served only
-     | while its screen is in the reader's navigation.
+     | while its screen is in the reader's navigation. One list serves every
+     | panel: each panel keeps only the screens it registers.
      */
     'screens' => [],
 

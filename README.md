@@ -93,7 +93,8 @@ Each doc is `resources/docs/{slug}.md`. List the screen each one describes in `c
 ```
 
 Docs about a concept rather than a screen go under `concepts`, by slug and label (a translation key or plain text),
-at the top of the sidebar. `index` is the page the docs open on.
+at the top of the sidebar. Give one its own icon with `['label' => 'Style guide', 'icon' => Heroicon::OutlinedSwatch]`.
+The docs open on `index`, or on the first doc of the sidebar when there is no `index`.
 
 ```markdown
 ## Roles
@@ -114,8 +115,24 @@ FilamentDocsPlugin::make()
     ->navigationSort(1000)
     ->navigationIcon(Heroicon::OutlinedInformationCircle)
     ->pdfExport(fn (User $user) => true)             // allow the PDF export, or a closure; default: true
-    ->pdfLogo(resource_path('images/logo.png'));     // image on the manual's cover; default: none
+    ->pdfLogo(resource_path('images/logo.png'))      // image on the manual's cover; default: none
+    ->path(resource_path('docs/website'))            // this panel's markdown folder; default: filament-docs.path
+    ->concepts(['style-guide' => 'Style guide'])     // this panel's concept docs; default: filament-docs.concepts
+    ->preprocessMarkdown(fn (string $markdown, string $slug): string => $markdown); // rewrite a doc before it renders
 ```
+
+### Several panels
+
+Register the plugin in each panel that shows docs. One `screens` list serves them all, as each panel keeps only the
+screens it registers. Give a panel its own folder with `->path()` and its own concept docs with `->concepts()`. The
+screenshots of every panel stay on the one `filament-docs` disk, so a slug must be unique across panels. Shoot a
+panel's screens with `php artisan docs:screenshot --panel={id}`.
+
+### Your own markup
+
+`preprocessMarkdown()` receives each doc's markdown and its slug before it is rendered, searched or exported to PDF,
+for an app's own tokens, e.g. `[status:paid]` into a badge. Whatever it returns is still sanitized, so keep to plain HTML
+elements and classes.
 
 ## PDF export
 

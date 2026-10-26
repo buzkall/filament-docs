@@ -30,6 +30,7 @@ use UnitEnum;
  * `config('filament-docs.screens')` replaced by its doc, so the two read
  * alike and a reader only finds the docs for the screens in their navigation.
  *
+ * @phpstan-import-type Concept from DocsConfig
  * @phpstan-import-type Heading from DocRenderer
  * @phpstan-import-type RenderedDoc from DocRenderer
  *
@@ -185,7 +186,7 @@ class Documentation extends Page
 
     public function mount(?string $doc = null): void
     {
-        $this->docSlug = $doc ?? 'index';
+        $this->docSlug = $doc ?? $this->defaultDocSlug();
         $this->highlight = request()->query('highlight');
 
         // Same 404 as an unknown slug: a 403 would confirm the doc exists to
@@ -212,11 +213,13 @@ class Documentation extends Page
 
         $slugsByUrl = [];
 
+        // The URL the navigation item links to, which a screen may point
+        // elsewhere than its index, e.g. at the edit page of its only record.
         foreach ($this->screens() as $slug => $screen) {
-            $slugsByUrl[$screen::getUrl()] = $slug;
+            $slugsByUrl[$screen::getNavigationUrl()] = $slug;
         }
 
-        $groups = [['label' => null, 'items' => array_map($this->conceptItem(...), array_keys($this->concepts()), $this->concepts())]];
+        $groups = [['label' => null, 'items' => array_map($this->conceptItem(...), array_keys($this->concepts()), array_values($this->concepts()))]];
 
         foreach (Filament::getNavigation() as $navigationGroup) {
             $items = [];
@@ -254,7 +257,7 @@ class Documentation extends Page
     {
         $screen = $this->screens()[$this->docSlug] ?? null;
 
-        return $screen === null ? null : $screen::getUrl();
+        return $screen === null ? null : $screen::getNavigationUrl();
     }
 
     public function getRenderedContent(): string
@@ -361,20 +364,44 @@ class Documentation extends Page
      */
     protected function screens(): array
     {
-        return DocsConfig::screens();
+        $panel = Filament::getCurrentOrDefaultPanel();
+
+        return $panel === null ? [] : DocsConfig::screensIn($panel);
     }
 
     /**
-     * @return array<string, string>
+     * @return array<string, Concept>
      */
     protected function concepts(): array
     {
-        return DocsConfig::concepts();
+        return FilamentDocsPlugin::get()?->getConcepts() ?? DocsConfig::concepts();
     }
 
     protected function docPath(string $slug): string
     {
-        return DocsConfig::docPath($slug);
+        return FilamentDocsPlugin::get()?->getDocPath($slug) ?? DocsConfig::docPath($slug);
+    }
+
+    /**
+     * The markdown of a doc in this panel, after the plugin's
+     * preprocessMarkdown(), as the page, the search and the PDF all read it.
+     */
+    public function getMarkdown(string $slug): string
+    {
+        $markdown = File::get($this->docPath($slug));
+
+        return FilamentDocsPlugin::get()?->prepareMarkdown($markdown, $slug) ?? $markdown;
+    }
+
+    /**
+     * The introduction when the panel has one, otherwise the first doc in the
+     * sidebar, so a panel without an `index` still opens on something.
+     */
+    private function defaultDocSlug(): string
+    {
+        $slugs = array_column(array_merge(...array_column($this->getSidebarGroups(), 'items')), 'slug');
+
+        return in_array('index', $slugs, true) ? 'index' : $slugs[0] ?? 'index';
     }
 
     /**
@@ -392,10 +419,15 @@ class Documentation extends Page
     private function document(string $slug): array
     {
         $path = $this->docPath($slug);
-        $key = implode(':', ['filament-docs', 'v' . DocRenderer::VERSION, app()->getLocale(), $slug, File::lastModified($path)]);
+
+        // By panel and file rather than slug: two panels may each have a doc
+        // by the same slug, and each its own preprocessMarkdown().
+        $key = implode(':', [
+            'filament-docs', 'v' . DocRenderer::VERSION, app()->getLocale(), Filament::getCurrentOrDefaultPanel()?->getId(), md5($path), File::lastModified($path),
+        ]);
 
         return Cache::remember($key, now()->addDay(), fn(): array => app(DocRenderer::class)->render(
-            File::get($path),
+            $this->getMarkdown($slug),
             fn(string $target): string => static::getUrl(['doc' => $target]),
         ));
     }
@@ -473,14 +505,15 @@ class Documentation extends Page
     }
 
     /**
+     * @param  Concept  $concept
      * @return DocItem
      */
-    private function conceptItem(string $slug, string $label): array
+    private function conceptItem(string $slug, array $concept): array
     {
         return [
             'slug'  => $slug,
-            'label' => $this->translate($label),
-            'icon'  => Heroicon::OutlinedDocumentText,
+            'label' => $this->translate($concept['label']),
+            'icon'  => $concept['icon'] ?? Heroicon::OutlinedDocumentText,
             'url'   => static::getUrl(['doc' => $slug]),
         ];
     }

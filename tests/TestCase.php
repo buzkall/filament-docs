@@ -4,10 +4,12 @@ namespace Arzcode\FilamentDocs\Tests;
 
 use Arzcode\FilamentDocs\FilamentDocsServiceProvider;
 use Arzcode\FilamentDocs\Tests\Fixtures\AdminPanelProvider;
+use Arzcode\FilamentDocs\Tests\Fixtures\Pages\Announcements;
 use Arzcode\FilamentDocs\Tests\Fixtures\Pages\Reports;
 use Arzcode\FilamentDocs\Tests\Fixtures\Pages\Settings;
 use Arzcode\FilamentDocs\Tests\Fixtures\Resources\Posts\PostResource;
 use Arzcode\FilamentDocs\Tests\Fixtures\User;
+use Arzcode\FilamentDocs\Tests\Fixtures\WebsitePanelProvider;
 use Barryvdh\DomPDF\ServiceProvider as DomPdfServiceProvider;
 use BladeUI\Heroicons\BladeHeroiconsServiceProvider;
 use BladeUI\Icons\BladeIconsServiceProvider;
@@ -73,6 +75,7 @@ class TestCase extends Orchestra
             DomPdfServiceProvider::class,
             FilamentDocsServiceProvider::class,
             AdminPanelProvider::class,
+            WebsitePanelProvider::class,
         ];
     }
 
@@ -95,9 +98,10 @@ class TestCase extends Orchestra
         $app['config']->set('view.compiled', sys_get_temp_dir() . '/filament-docs-views');
         $app['config']->set('filament-docs.path', $this->docsPath);
         $app['config']->set('filament-docs.screens', [
-            'posts'    => PostResource::class,
-            'reports'  => Reports::class,
-            'settings' => Settings::class,
+            'posts'         => PostResource::class,
+            'reports'       => Reports::class,
+            'settings'      => Settings::class,
+            'announcements' => Announcements::class,
         ]);
     }
 

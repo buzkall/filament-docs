@@ -42,7 +42,7 @@ class DocScreenshots
         try {
             $targets = [];
 
-            foreach (DocsConfig::screens() as $slug => $class) {
+            foreach (DocsConfig::screensIn(Filament::getPanel($panelId)) as $slug => $class) {
                 if (! File::exists($this->docPath($slug))) {
                     continue;
                 }
@@ -226,8 +226,8 @@ class DocScreenshots
     }
 
     /**
-     * The configured prefix, or the image route of the first panel that
-     * registers the plugin.
+     * The configured prefix, or the image route of the current panel, or of
+     * the first panel that registers the plugin.
      */
     public function imagesUrl(): string
     {
@@ -237,7 +237,9 @@ class DocScreenshots
             return rtrim($configured, '/');
         }
 
-        foreach (Filament::getPanels() as $panel) {
+        $current = Filament::getCurrentPanel();
+
+        foreach (array_filter([$current, ...Filament::getPanels()]) as $panel) {
             $plugin = FilamentDocsPlugin::get($panel);
 
             if ($plugin instanceof FilamentDocsPlugin) {
@@ -354,8 +356,9 @@ class DocScreenshots
             . implode("\n\n", $references) . "\n<!-- screenshots:end -->\n";
     }
 
+    /** The doc in the folder of the current panel, the one being captured. */
     private function docPath(string $slug): string
     {
-        return DocsConfig::docPath($slug);
+        return FilamentDocsPlugin::get()?->getDocPath($slug) ?? DocsConfig::docPath($slug);
     }
 }
