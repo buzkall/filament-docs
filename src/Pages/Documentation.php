@@ -3,6 +3,7 @@
 namespace Arzcode\FilamentDocs\Pages;
 
 use Arzcode\FilamentDocs\FilamentDocsPlugin;
+use Arzcode\FilamentDocs\Support\DocMarkdown;
 use Arzcode\FilamentDocs\Support\DocPdf;
 use Arzcode\FilamentDocs\Support\DocRenderer;
 use Arzcode\FilamentDocs\Support\DocsConfig;
@@ -20,6 +21,7 @@ use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\File;
 use Livewire\Attributes\Locked;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use UnitEnum;
@@ -124,8 +126,9 @@ class Documentation extends Page
     }
 
     /**
-     * One "Export PDF" menu: the open doc, or the whole manual. The open doc
-     * is not offered over search results, where none is open.
+     * One "Export" menu: the open doc or the whole manual as a PDF, and the
+     * whole manual as markdown. The open doc is not offered over search
+     * results, where none is open.
      *
      * @return array<Action|ActionGroup>
      */
@@ -136,18 +139,39 @@ class Documentation extends Page
                 Action::make('exportDocPdf')
                     ->label(__('filament-docs::docs.pdf.this_doc'))
                     ->icon(Heroicon::OutlinedDocumentText)
-                    ->visible(fn(): bool => blank($this->search))
+                    ->visible(fn(): bool => blank($this->search) && DocPdf::canExport())
                     ->action(fn(): StreamedResponse => $this->exportDocPdf()),
                 Action::make('exportManualPdf')
                     ->label(__('filament-docs::docs.pdf.manual'))
                     ->icon(Heroicon::OutlinedBookOpen)
+                    ->visible(fn(): bool => DocPdf::canExport())
                     ->action(fn(): StreamedResponse => $this->exportManualPdf()),
+                Action::make('exportManualMarkdown')
+                    ->label(__('filament-docs::docs.markdown.manual'))
+                    ->icon(Heroicon::OutlinedCodeBracketSquare)
+                    ->visible(fn(): bool => DocMarkdown::canExport())
+                    ->action(fn(): BinaryFileResponse => $this->exportManualMarkdown()),
             ])
-                ->label(__('filament-docs::docs.pdf.export'))
+                ->label(__('filament-docs::docs.export'))
                 ->icon(Heroicon::OutlinedArrowDownTray)
                 ->button()
-                ->visible(fn(): bool => DocPdf::canExport()),
+                ->visible(fn(): bool => DocPdf::canExport() || DocMarkdown::canExport()),
         ];
+    }
+
+    /**
+     * The whole manual as a zip of markdown files and their screenshots,
+     * deleted from the temporary folder once sent.
+     */
+    public function exportManualMarkdown(): BinaryFileResponse
+    {
+        abort_unless(DocMarkdown::canExport(), Response::HTTP_FORBIDDEN);
+
+        $name = __('filament-docs::docs.markdown.manual_filename', ['app' => config()->string('app.name')]);
+
+        return response()
+            ->download(app(DocMarkdown::class)->zip(), $this->fileName($name, 'zip'), ['Content-Type' => 'application/zip'])
+            ->deleteFileAfterSend();
     }
 
     public function exportDocPdf(): StreamedResponse
@@ -178,16 +202,22 @@ class Documentation extends Page
     }
 
     /**
-     * Streams the PDF as `{name}.pdf`, with the characters no file system
-     * accepts in a file name replaced by a dash.
+     * Streams the PDF as `{name}.pdf`.
      */
     private function downloadPdf(string $content, string $name): StreamedResponse
     {
-        $filename = trim((string)preg_replace('#[\\\\/:*?"<>|]+#', '-', $name)) . '.pdf';
-
         return response()->streamDownload(function() use ($content): void {
             echo $content;
-        }, $filename, ['Content-Type' => 'application/pdf']);
+        }, $this->fileName($name, 'pdf'), ['Content-Type' => 'application/pdf']);
+    }
+
+    /**
+     * `{name}.{extension}`, with the characters no file system accepts in a
+     * file name replaced by a dash.
+     */
+    private function fileName(string $name, string $extension): string
+    {
+        return trim((string)preg_replace('#[\\\\/:*?"<>|]+#', '-', $name)) . ".{$extension}";
     }
 
     public function mount(?string $doc = null): void

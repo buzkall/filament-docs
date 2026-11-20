@@ -69,6 +69,7 @@ class ScreenshotDocsCommand extends Command
             'slug'         => $target['slug'],
             'screen'       => $target['screen'],
             'url'          => $target['path'],
+            'fallbacks'    => $target['fallbacks'] ?? [],
             'out'          => "{$target['slug']}/{$target['screen']}.webp",
             'interactions' => DocsConfig::interactions($target['slug'], $target['screen']),
         ], $targets);

@@ -12,6 +12,7 @@ return [
     'on_this_page'       => 'En esta página',
     'previous'           => 'Anterior',
     'next'               => 'Siguiente',
+    'export'             => 'Exportar',
 
     'callouts' => [
         'note'      => 'Nota',
@@ -30,15 +31,19 @@ return [
     ],
 
     'pdf' => [
-        'export'           => 'Exportar PDF',
-        'this_doc'         => 'Este documento',
-        'manual'           => 'Todo el manual',
+        'this_doc'         => 'Este documento (PDF)',
+        'manual'           => 'Todo el manual (PDF)',
         'contents'         => 'Índice',
         'contents_hint'    => 'Pulsa una entrada para ir a su sección.',
         'back_to_contents' => 'Volver al índice',
         'title'            => 'Documentación de :app',
         'manual_filename'  => 'Documentación :app',
         'doc_filename'     => 'Documentación :app - :doc',
+    ],
+
+    'markdown' => [
+        'manual'          => 'Todo el manual (Markdown)',
+        'manual_filename' => 'Documentación :app - Markdown',
     ],
 
     'pages' => [

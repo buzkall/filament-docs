@@ -12,6 +12,7 @@ return [
     'on_this_page'       => 'On this page',
     'previous'           => 'Previous',
     'next'               => 'Next',
+    'export'             => 'Export',
 
     'callouts' => [
         'note'      => 'Note',
@@ -30,15 +31,19 @@ return [
     ],
 
     'pdf' => [
-        'export'           => 'Export PDF',
-        'this_doc'         => 'This document',
-        'manual'           => 'The whole manual',
+        'this_doc'         => 'This document (PDF)',
+        'manual'           => 'The whole manual (PDF)',
         'contents'         => 'Contents',
         'contents_hint'    => 'Click an entry to jump to its section.',
         'back_to_contents' => 'Back to contents',
         'title'            => ':app documentation',
         'manual_filename'  => 'Documentation :app',
         'doc_filename'     => 'Documentation :app - :doc',
+    ],
+
+    'markdown' => [
+        'manual'          => 'The whole manual (Markdown)',
+        'manual_filename' => 'Documentation :app - Markdown',
     ],
 
     'pages' => [

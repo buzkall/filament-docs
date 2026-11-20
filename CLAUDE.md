@@ -23,7 +23,8 @@ Targets: **PHP 8.4+, Laravel 12 or 13, Filament 5.8+, Livewire 4**.
 | `src/Pages/Documentation.php` | The page: sidebar from the navigation, rendering, search, contents list, pager |
 | `src/Http/Controllers/DocumentationImageController.php` | Streams a screenshot to a reader of its doc |
 | `src/Support/DocRenderer.php` | Markdown → sanitized HTML → anchors, callouts, `.md` links, plain text for search |
-| `src/Support/DocPdf.php` | The PDF of a doc or of the manual: images from the disk, headings kept with their block, callout colors; the "Export PDF" actions are on the page |
+| `src/Support/DocPdf.php` | The PDF of a doc or of the manual: images from the disk, headings kept with their block, callout colors; the "Export" actions are on the page |
+| `src/Support/DocMarkdown.php` | The manual as a zip of markdown: one `{slug}.md` per sidebar doc, its screenshots under `images/` (a link to a missing one is left as it was), a `README.md` index (`_README.md` when a doc is called `readme`) |
 | `src/Support/DocScreenshots.php` | Screenshot targets, and embedding the images into the markdown |
 | `src/Support/DocsConfig.php` | The config, read with its types checked |
 | `src/Support/{PanelProviders,Themes,DocsSlug}.php` | Install helpers: patch panel providers and themes, probe the slug |
@@ -39,7 +40,7 @@ Targets: **PHP 8.4+, Laravel 12 or 13, Filament 5.8+, Livewire 4**.
 3. **Nothing per reader is cached.** A rendered doc is cached by renderer version, locale, panel, file and mtime; the highlight is applied after. Bump `DocRenderer::VERSION` whenever a render changes.
 4. **The screenshot command never wipes a doc.** A run that captured nothing changes nothing; a narrowed or partly failed run replaces only the screens it shot.
 5. **Nothing about the host is assumed.** No `App\` class, no role, no panel id: the arch test fails on an `App` import.
-6. **The PDF is built from the sidebar.** `DocPdf` reads only the docs `Documentation::getSidebarGroups()` returns, never the docs folder, and dompdf may read files only from its chroot (the app, the screenshots disk and the logo's folder). dompdf has no CSS variables or oklch(), so colors in `resources/views/pdf.blade.php` are concrete values from `FilamentColor`.
+6. **The exports are built from the sidebar.** `DocMarkdown` and `DocPdf` read only the docs `Documentation::getSidebarGroups()` returns, never the docs folder, and dompdf may read files only from its chroot (the app, the screenshots disk and the logo's folder). dompdf has no CSS variables or oklch(), so colors in `resources/views/pdf.blade.php` are concrete values from `FilamentColor`.
 7. **Every user-facing string is a translation key** in both `en` and `es`; `tests/Unit/TranslationsTest.php` fails on a missing key.
 
 ## How it works
@@ -71,7 +72,8 @@ The open doc marks the search with `?highlight=`: the whole phrase first, as one
 
 ### Screenshots
 
-- Targets come from `screens`: a page gives one `list` shot; a resource gives list, create, view and edit, the last two with its first record **by route key** (a model may route by slug).
+- Targets come from `screens`: a page gives one `list` shot; a resource gives list, create, view and edit, the last two with its first record in primary key order, named **by route key** (a model may route by slug), and the next records, up to ten, as `fallbacks`.
+- The runner never shoots an error page (400 or above): on a 403 or 404 a view or edit shot moves to its next fallback; any other error, or running out of fallbacks, fails the shot and keeps its old image. A resource may refuse some records (a synced one nobody edits by hand), so the first record is not always one the page opens.
 - The command writes a manifest (`storage/app/docs-screenshots-manifest.json`) and runs `bin/screenshot-docs.mjs`, which loads `playwright` from the manifest's `appRoot` so it works when the package is a symlink. The runner logs in (a local-only URL, or the login form from `DOCS_SCREENSHOT_EMAIL`/`_PASSWORD`), fails any shot redirected to the login, sets every table to `per_page` rows, hides debug and environment badges, sizes the shot to the taller of the content and the full sidebar, shoots a PNG at 1x and converts it with `cwebp`. Panels whose schema tabs sit near the top get one shot per tab.
 - Images go in `{path}/images/{slug}/{screen}[-{tab}].webp` on the `filament-docs` disk. A tab image goes at the end of the section whose heading matches the tab label, between `<!-- screenshot:… -->` markers; everything else goes in a `<!-- screenshots:start/end -->` block at the bottom. A re-run strips and rewrites only those blocks, and their blank lines, so the prose is untouched and the file is byte-for-byte stable.
 - `DocumentationImageController` serves an image only to a reader whose sidebar holds its doc, with `Cache-Control: private, no-cache` and `Last-Modified`: a re-shot screen keeps its URL, so the browser revalidates and gets a 304 until the file changes.

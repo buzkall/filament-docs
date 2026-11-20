@@ -201,15 +201,50 @@ try {
     await finish(1);
 }
 
-for (const shot of shots) {
-    try {
-        await page.setViewportSize({ width: viewport.width, height: viewport.height });
-        await page.goto(`${baseUrl}${shot.url}`, { waitUntil: 'networkidle' });
+// A screen the user may not open answers 403, and a record it cannot reach 404.
+const REFUSED = [403, 404];
+
+/**
+ * Opens the shot's page, or the next of its fallbacks (the same screen with
+ * another record) while a page refuses it with a 403 or 404. No error page is
+ * ever shot: it must not reach a doc, and a failed shot keeps the old image.
+ */
+async function openShot(shot) {
+    const urls = [shot.url, ...(shot.fallbacks ?? [])];
+    let status = null;
+
+    for (const url of urls) {
+        const response = await page.goto(`${baseUrl}${url}`, { waitUntil: 'networkidle' });
 
         // A shot of the login form instead of the screen must never reach a doc.
         if (onLoginPage()) {
             throw new Error('redirected to the login page; the session was lost or this user cannot open the screen');
         }
+
+        status = response?.status() ?? null;
+
+        if (REFUSED.includes(status)) {
+            continue;
+        }
+
+        // Any other error page (a 500, say) must not replace a good image either,
+        // and another record would not fix it.
+        if (status !== null && status >= 400) {
+            throw new Error(`the page answered ${status}; the old image is kept`);
+        }
+
+        return;
+    }
+
+    throw new Error(urls.length > 1
+        ? `each of the ${urls.length} records tried answered 403 or 404; the old image is kept`
+        : `the page answered ${status}; this user cannot open it, so the old image is kept`);
+}
+
+for (const shot of shots) {
+    try {
+        await page.setViewportSize({ width: viewport.width, height: viewport.height });
+        await openShot(shot);
 
         await page.addStyleTag({ content: STABILIZE_CSS });
         await shortenTables(page);

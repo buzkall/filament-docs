@@ -12,9 +12,10 @@ with search, a contents list, callouts, a pager and optional screenshots taken b
   word starts, short words such as "de" only within the phrase.
 - `> [!NOTE]`, `[!TIP]`, `[!IMPORTANT]`, `[!WARNING]` and `[!CAUTION]` become callouts, `[Users](users.md)` links to
   that doc, and every `##`/`###` gets an anchor and a place in the "On this page" list.
-- **Export PDF** in the page header downloads the open doc, or the whole manual with a cover and a contents list, as a
+- **Export** in the page header downloads the open doc, or the whole manual with a cover and a contents list, as a
   PDF of only the docs the reader may open. The file is named after `app.name`: `Documentation Acme.pdf` for the
   manual and `Documentation Acme - Posts.pdf` for one doc (translated through `filament-docs::docs.pdf.*_filename`).
+  The same menu downloads the whole manual as markdown: a zip of those docs and their screenshots.
 - `php artisan docs:screenshot` photographs every documented screen and embeds the images into the docs.
 
 ## Requirements
@@ -117,6 +118,7 @@ FilamentDocsPlugin::make()
     ->navigationIcon(Heroicon::OutlinedInformationCircle)
     ->pdfExport(fn (User $user) => true)             // allow the PDF export, or a closure; default: true
     ->pdfLogo(resource_path('images/logo.png'))      // image on the manual's cover; default: none
+    ->markdownExport(fn (User $user) => true)        // allow the markdown zip, or a closure; default: true
     ->path(resource_path('docs/website'))            // this panel's markdown folder; default: filament-docs.path
     ->concepts(['style-guide' => 'Style guide'])     // this panel's concept docs; default: filament-docs.concepts
     ->preprocessMarkdown(fn (string $markdown, string $slug): string => $markdown); // rewrite a doc before it renders
@@ -135,15 +137,27 @@ panel's screens with `php artisan docs:screenshot --panel={id}`.
 for an app's own tokens, e.g. `[status:paid]` into a badge. Whatever it returns is still sanitized, so keep to plain HTML
 elements and classes.
 
-## PDF export
+## Export
 
-The page header has an "Export PDF" menu with two entries: the open doc, and the whole manual. Both are built with
+The page header has an "Export" menu: the open doc and the whole manual as a PDF, and the whole manual as markdown.
+
+### PDF
+
+The open doc and the whole manual are built with
 [dompdf](https://github.com/barryvdh/laravel-dompdf) from the docs in the reader's sidebar, so a PDF never holds a doc
 the reader cannot open. The manual has a cover (the logo set with `pdfLogo()` and the title), a clickable contents list
 with the page of each doc, the docs in sidebar order grouped by the panel's navigation groups, and page numbers. The
 manual is laid out twice to learn those pages, so it takes about twice as long as a single doc. Callouts take the panel's colors,
 and each screenshot is read from the `filament-docs` disk, sized to fit a page and kept with its caption. Turn it off
 with `->pdfExport(false)`.
+
+### Markdown
+
+A zip named `Documentation Acme - Markdown.zip` holding a `{slug}.md` per doc in the reader's sidebar, the screenshots
+those docs show under `images/`, and a `README.md` that lists the docs in sidebar order and groups. The screenshot links
+point at `images/`, and links between docs are already relative, so the copy reads the same in any markdown viewer or
+on GitHub, offline. The markdown is what the page renders, after `preprocessMarkdown()`. It needs PHP's `zip`
+extension; without it the entry is hidden. Turn it off with `->markdownExport(false)`.
 
 ## Screenshots
 
@@ -154,7 +168,9 @@ php artisan docs:screenshot
 ```
 
 The command builds the list of shots from `screens`: one per page, and list, create, view and edit for a resource (the
-last two with its first record). It logs a browser in, shoots each screen at 1x, converts it to WebP and embeds the
+last two with its first record by primary key). A screen that answers an error (400 or above) is never shot and keeps
+its old image; a view or edit shot refused with a 403 or 404 first moves on to the next record, up to ten, so a resource
+that refuses some records (one a sync writes, say) is shot with one it allows. It logs a browser in, shoots each screen at 1x, converts it to WebP and embeds the
 images into the docs between `<!-- screenshot -->` markers, so a re-run replaces only its own output. Write your prose
 outside those markers and never edit inside them. A screen with tabs near the top gets one image per tab, placed at
 the end of the section whose heading matches the tab's label.

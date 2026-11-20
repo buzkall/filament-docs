@@ -180,6 +180,7 @@ it('hands the runner a manifest built from the panel and the config', function()
             'slug'         => 'reports',
             'screen'       => 'list',
             'url'          => '/admin/reports',
+            'fallbacks'    => [],
             'out'          => 'reports/list.webp',
             'interactions' => ['.open-me'],
         ]]);

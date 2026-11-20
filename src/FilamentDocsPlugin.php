@@ -39,6 +39,7 @@ class FilamentDocsPlugin implements Plugin
     protected array|Closure|null $concepts = null;
 
     protected bool|Closure $pdfExport = true;
+    protected bool|Closure $markdownExport = true;
     protected string|Closure|null $pdfLogo = null;
     protected string|UnitEnum|Closure|null $navigationGroup = null;
     protected ?int $navigationSort = 1000;
@@ -236,6 +237,25 @@ class FilamentDocsPlugin implements Plugin
         $user ??= Filament::auth()->user();
 
         return (bool)$this->evaluate($this->pdfExport, ['user' => $user]);
+    }
+
+    /**
+     * Whether readers may download the whole manual as markdown: a zip of
+     * the docs they may open and their screenshots. Receives the
+     * authenticated user when given a closure. On by default.
+     */
+    public function markdownExport(bool|Closure $condition = true): static
+    {
+        $this->markdownExport = $condition;
+
+        return $this;
+    }
+
+    public function hasMarkdownExport(?Authenticatable $user = null): bool
+    {
+        $user ??= Filament::auth()->user();
+
+        return (bool)$this->evaluate($this->markdownExport, ['user' => $user]);
     }
 
     /**

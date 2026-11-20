@@ -1,7 +1,12 @@
 # Changelog
 
-## 1.1.1 - Unreleased
+## 1.2.0 - 2026-11-20
 
+- Markdown export: the "Export" menu (formerly "Export PDF") downloads the whole manual as a zip of the reader's docs,
+  their screenshots under `images/` and a `README.md` index. Turn it off with `->markdownExport(false)`.
+- `docs:screenshot` never shoots an error page: a page that answers 400 or above fails and keeps its old image. A view
+  or edit shot refused with a 403 or 404 first tries the next records, up to ten and in primary key order, so a resource
+  that refuses some records is shot with one it allows, and every run picks the same one.
 - The search highlight no longer marks a word inside another, nor short words such as "de" or "a" on their own: it
   marks the whole phrase as one, then each word where a word starts. Searching "copia de seguridad" used to mark every
   "de" in the doc, "descargarlos" included.

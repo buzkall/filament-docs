@@ -26,12 +26,16 @@ class DocScreenshots
 {
     private const array SCREENS = ['index' => 'list', 'create' => 'create', 'view' => 'view', 'edit' => 'edit'];
 
+    /** How many records a view or edit shot may try before it gives up. */
+    private const int RECORD_CANDIDATES = 10;
+
     /**
      * One entry per page to capture, for every slug of `config('filament-docs.screens')`
      * that has a markdown file. Resources give list/create/view/edit (the last
-     * two need a record); a plain page gives one `list` shot.
+     * two need a record, and carry the next records as fallbacks); a plain
+     * page gives one `list` shot.
      *
-     * @return list<array{slug: string, screen: string, path: string}>
+     * @return list<array{slug: string, screen: string, path: string, fallbacks?: list<string>}>
      */
     public function screenshotTargets(string $panelId): array
     {
@@ -151,27 +155,51 @@ class DocScreenshots
     }
 
     /**
+     * A view or edit shot names its first record's page, and the pages of the
+     * next ones as fallbacks: a resource may refuse some records (a synced
+     * record nobody edits by hand), so the runner moves to the next record
+     * when one answers 403 or 404.
+     *
      * @param  class-string<FilamentResource>  $class
-     * @return list<array{slug: string, screen: string, path: string}>
+     * @return list<array{slug: string, screen: string, path: string, fallbacks?: list<string>}>
      */
     private function resourceTargets(string $class, string $slug): array
     {
         $pages = array_keys($class::getPages());
-        $recordId = $this->firstRecordId($class);
+        $recordIds = $this->recordIds($class);
         $targets = [];
 
         foreach (self::SCREENS as $page => $screen) {
-            $needsRecord = in_array($screen, ['view', 'edit'], true);
-
-            if (! in_array($page, $pages, true) || ($needsRecord && $recordId === null)) {
+            if (! in_array($page, $pages, true)) {
                 continue;
             }
 
-            $path = $this->urlPath(fn(): string => $class::getUrl($page, $needsRecord ? ['record' => $recordId] : []));
+            if (! in_array($screen, ['view', 'edit'], true)) {
+                $path = $this->urlPath(fn(): string => $class::getUrl($page));
 
-            if ($path !== null) {
-                $targets[] = ['slug' => $slug, 'screen' => $screen, 'path' => $path];
+                if ($path !== null) {
+                    $targets[] = ['slug' => $slug, 'screen' => $screen, 'path' => $path];
+                }
+
+                continue;
             }
+
+            $paths = array_values(array_filter(array_map(
+                fn(int|string $recordId): ?string => $this->urlPath(fn(): string => $class::getUrl($page, ['record' => $recordId])),
+                $recordIds,
+            )));
+
+            if ($paths === []) {
+                continue;
+            }
+
+            $target = ['slug' => $slug, 'screen' => $screen, 'path' => $paths[0]];
+
+            if (count($paths) > 1) {
+                $target['fallbacks'] = array_slice($paths, 1);
+            }
+
+            $targets[] = $target;
         }
 
         return $targets;
@@ -194,22 +222,32 @@ class DocScreenshots
     }
 
     /**
-     * Route key of the first record of the resource's model, ignoring global
-     * scopes, or null when the table is empty (view/edit are then skipped).
+     * Route keys of the first records of the resource's model, ignoring global
+     * scopes; empty when the table is (view/edit are then skipped).
      *
      * @param  class-string<FilamentResource>  $class
+     * @return list<int|string>
      */
-    private function firstRecordId(string $class): int|string|null
+    private function recordIds(string $class): array
     {
         try {
             $query = $class::getModel()::query()->withoutGlobalScopes();
 
-            // The route key, not the primary key: a model may route by its slug.
-            $key = $query->value($query->getModel()->getRouteKeyName());
+            $model = $query->getModel();
 
-            return is_int($key) || is_string($key) ? $key : null;
-        } catch (Throwable) {
-            return null;
+            // Ordered by the primary key, so every run shoots the same records;
+            // plucked by the route key, as a model may route by its slug.
+            $keys = $query->orderBy($model->getQualifiedKeyName())
+                ->limit(self::RECORD_CANDIDATES)
+                ->pluck($model->getRouteKeyName())
+                ->all();
+
+            return array_values(array_filter($keys, fn(mixed $key): bool => is_int($key) || is_string($key)));
+        } catch (Throwable $exception) {
+            // The view and edit shots are skipped, but the reason is logged.
+            report($exception);
+
+            return [];
         }
     }
 
