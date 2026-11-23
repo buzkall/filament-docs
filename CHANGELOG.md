@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.2.2 - 2026-11-23
+
+- Filament 5.12: `docs:screenshot --panel` with an unknown panel id fails with "Unknown panel" instead of an error on
+  null, now that `Filament::getPanel()` returns null for it rather than throwing.
+
 ## 1.2.1 - 2026-11-23
 
 - `SECURITY.md`: report vulnerabilities privately through GitHub's private vulnerability reporting.

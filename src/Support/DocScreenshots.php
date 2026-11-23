@@ -40,13 +40,19 @@ class DocScreenshots
     public function screenshotTargets(string $panelId): array
     {
         // Filament URL generation needs a current panel; restore it afterwards.
+        $panel = Filament::getPanel($panelId);
+
+        if ($panel === null) {
+            return [];
+        }
+
         $previousPanel = Filament::getCurrentPanel();
-        Filament::setCurrentPanel(Filament::getPanel($panelId));
+        Filament::setCurrentPanel($panel);
 
         try {
             $targets = [];
 
-            foreach (DocsConfig::screensIn(Filament::getPanel($panelId)) as $slug => $class) {
+            foreach (DocsConfig::screensIn($panel) as $slug => $class) {
                 if (! File::exists($this->docPath($slug))) {
                     continue;
                 }

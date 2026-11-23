@@ -54,6 +54,13 @@ class ScreenshotDocsCommand extends Command
         }
 
         $panel = filled($this->stringOption('panel')) ? Filament::getPanel($this->stringOption('panel')) : Filament::getDefaultPanel();
+
+        if ($panel === null) {
+            $this->error("Unknown panel: {$this->stringOption('panel')}.");
+
+            return self::FAILURE;
+        }
+
         $only = array_values(array_filter((array)$this->option('only'), is_string(...)));
 
         // The docs read and written are the ones in this panel's folder, with

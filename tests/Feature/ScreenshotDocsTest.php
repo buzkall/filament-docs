@@ -148,6 +148,16 @@ it('rejects an unknown screen', function(): void {
         ->assertFailed();
 });
 
+it('rejects an unknown panel', function(): void {
+    Process::fake();
+
+    $this->artisan('docs:screenshot', ['--panel' => 'missing'])
+        ->expectsOutputToContain('Unknown panel: missing.')
+        ->assertFailed();
+
+    Process::assertNothingRan();
+});
+
 it('stops before opening a browser when cwebp is missing', function(): void {
     Process::fake(['*cwebp*' => Process::result(exitCode: 127)]);
 
