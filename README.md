@@ -1,4 +1,4 @@
-![Filament Docs](.github/banner.webp)
+![Filament Docs](art/banner.webp)
 
 An in-panel user manual for Filament: one markdown file per screen, laid out exactly like the panel's own navigation,
 with search, a contents list, callouts, a pager and optional screenshots taken by Playwright.
