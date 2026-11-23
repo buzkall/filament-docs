@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.2.1 - 2026-11-23
+
+- `SECURITY.md`: report vulnerabilities privately through GitHub's private vulnerability reporting.
+- The GitHub Actions workflows pin every action to a commit SHA.
+- Dependabot keeps the actions and the Composer dependencies up to date, with a 7-day cooldown on new releases.
+
 ## 1.2.0 - 2026-11-20
 
 - Markdown export: the "Export" menu (formerly "Export PDF") downloads the whole manual as a zip of the reader's docs,
@@ -7,6 +13,9 @@
 - `docs:screenshot` never shoots an error page: a page that answers 400 or above fails and keeps its old image. A view
   or edit shot refused with a 403 or 404 first tries the next records, up to ten and in primary key order, so a resource
   that refuses some records is shot with one it allows, and every run picks the same one.
+
+## 1.1.1 - 2026-10-26
+
 - The search highlight no longer marks a word inside another, nor short words such as "de" or "a" on their own: it
   marks the whole phrase as one, then each word where a word starts. Searching "copia de seguridad" used to mark every
   "de" in the doc, "descargarlos" included.
